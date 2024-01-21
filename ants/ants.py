@@ -5,20 +5,16 @@ from torch import Tensor
 import pygame
 from pygame import Surface
 
-from ants.pytorch_utils import gaussian_blur_kernel
+from ants.pytorch_utils import gaussian_blur_kernel, random_disk
 
 
 class Ants:
     def __init__(self, screen_size: Tensor, resolution: int, ants_count: int, dtype=th.float32, device="cpu"):
         self.dtype = dtype
+        self.device = device
         self.resolution = resolution
         self.texture_size = th.ceil(screen_size / resolution).to(device)
-        self.pos = th.rand((ants_count, 2), dtype=dtype).to(device) * self.texture_size
-        self.angle = th.rand(ants_count, dtype=dtype).to(device) * (2 * th.pi)
-        self.speed = 0.3
-        self.trail_map = th.zeros((int(self.texture_size[0].item()), int(self.texture_size[1].item())), dtype=dtype).to(
-            device
-        )
+        self.set_random_pos_speed(ants_count)
 
         self.min_color = th.tensor((0, 0, 0), dtype=dtype).to(device)
         self.max_color = th.tensor((255, 255, 255), dtype=dtype).to(device)
@@ -36,6 +32,14 @@ class Ants:
         self.area_detection_indices = th.stack(th.meshgrid(area_detection_1D, area_detection_1D), dim=2)
         self.area_detection_indices = self.area_detection_indices.view(-1, 2).to(device)
         self.turn_speed = 0.1
+
+    def set_random_pos_speed(self, ants_count: int):
+        self.pos = random_disk(ants_count, self.device) * self.texture_size[1] / 2 + self.texture_size / 2
+        self.angle = th.rand(ants_count, dtype=self.dtype).to(self.device) * (2 * th.pi)
+        self.speed = 0.3
+        self.trail_map = th.zeros(
+            (int(self.texture_size[0].item()), int(self.texture_size[1].item())), dtype=self.dtype
+        ).to(self.device)
 
     def get_direction(self) -> Tensor:
         return th.stack([th.cos(self.angle), th.sin(self.angle)], dim=1)
