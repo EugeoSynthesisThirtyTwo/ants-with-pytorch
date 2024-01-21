@@ -52,7 +52,6 @@ while running:
     pygame.display.flip()
     fps_counter.update()
     pygame.display.set_caption(f"{fps_counter.get()} fps")
-    time.sleep(0.01)
 
 # Quit Pygame
 pygame.quit()
